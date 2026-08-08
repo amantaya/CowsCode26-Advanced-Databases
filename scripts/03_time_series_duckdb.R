@@ -58,6 +58,20 @@ with_gaps <- dbGetQuery(
   "
 )
 
+week_of_data <- dbGetQuery(
+  con,
+  "
+  SELECT
+    animal_id,
+    ts,
+    activity_count
+  FROM accel_events
+  WHERE ts >= TIMESTAMP '2026-06-01 00:00:00'
+    AND ts < TIMESTAMP '2026-06-08 00:00:00'
+  ORDER BY animal_id, ts
+  "
+)
+
 hourly_summary <- dbGetQuery(
   con,
   "
@@ -74,4 +88,5 @@ hourly_summary <- dbGetQuery(
 )
 
 print(with_gaps)
+print(week_of_data)
 print(hourly_summary)
