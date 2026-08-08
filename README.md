@@ -4,11 +4,9 @@ Reveal.js slides for a 1-hour workshop on advanced databases for precision lives
 
 ## Live slides
 
-After GitHub Pages is enabled, the published deck should be available at:
+The slides for this workshop are available at:
 
-- [https://YOUR_GITHUB_USERNAME.github.io/Advanced-Databases/](https://YOUR_GITHUB_USERNAME.github.io/Advanced-Databases/)
-
-Replace `YOUR_GITHUB_USERNAME` after you push this repository to GitHub if your account or organization name differs.
+- [https://amantaya.github.io/Advanced-Databases/](https://amantaya.github.io/Advanced-Databases/)
 
 ## Topics included
 
@@ -44,11 +42,3 @@ Rscript scripts/01_joins_duckdb.R
 Rscript scripts/02_spatial_duckdb.R
 Rscript scripts/03_time_series_duckdb.R
 ```
-
-## Publish with GitHub Pages
-
-This repository includes a GitHub Actions workflow that renders the Quarto site and deploys it to GitHub Pages.
-
-1. Push the repository to GitHub.
-2. In the repository settings, enable GitHub Pages and set the source to `GitHub Actions`.
-3. Update the live slide URL above if needed.
