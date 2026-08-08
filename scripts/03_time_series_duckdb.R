@@ -17,6 +17,15 @@ library(duckdb)
 con <- dbConnect(duckdb(), dbdir = ":memory:")
 on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
+ensure_duckdb_connection <- function(con) {
+  # Source runs in an interactive session, so recreate stale connections on rerun.
+  if (inherits(con, "DBIConnection") && dbIsValid(con)) {
+    return(con)
+  }
+
+  dbConnect(duckdb(), dbdir = ":memory:")
+}
+
 accel_events <- data.frame(
   animal_id = c("A01", "A01", "A01", "A02", "A02"),
   ts = as.POSIXct(
@@ -32,7 +41,8 @@ accel_events <- data.frame(
   activity_count = c(120, 140, 95, 180, 165)
 )
 
-dbWriteTable(con, "accel_events", accel_events, overwrite = TRUE)
+con <- ensure_duckdb_connection(con)
+dbWriteTable(con, "accel_events", accel_events)
 
 with_gaps <- dbGetQuery(
   con,
