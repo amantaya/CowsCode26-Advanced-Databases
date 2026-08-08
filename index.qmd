@@ -20,9 +20,7 @@ Early-career faculty and graduate researchers in precision livestock technology 
 
 - wearable data are large, messy, and joined across many sources
 - geospatial workflows need more than spreadsheets and ad hoc scripts
-- the best database choice depends on the research question, not on habit
-
-This session is built for decisions, tradeoffs, and practical next steps.
+- the best database and analytical process choice depends on the research question
 
 ## What we will cover
 
@@ -32,7 +30,7 @@ This session is built for decisions, tradeoffs, and practical next steps.
 - time-series queries for accelerometer and event streams
 - example R scripts using `DBI` with `duckdb`
 
-## One-hour route
+## One-Hour Agenda
 
 | Time | Segment |
 |---|---|
@@ -49,13 +47,13 @@ This session is built for decisions, tradeoffs, and practical next steps.
 - environmental layers: weather, vegetation, water points, paddock boundaries
 - outputs: summaries, movement metrics, maps, figures, reproducible tables
 
-## What breaks first
+## What Breaks First
 
-- millions of rows per deployment
-- repeated joins on timestamp and animal ID
-- geospatial operations done outside the analysis pipeline
-- multiple file formats with inconsistent metadata
-- no clear separation between raw, cleaned, and derived data
+- Millions of rows per deployment
+- Repeated joins on timestamp and animal ID
+- Geospatial operations done outside the analysis pipeline
+- Multiple file formats with inconsistent metadata
+- No clear separation between raw, cleaned, and derived data
 
 ## Why DuckDB plus DBI in R?
 
@@ -81,14 +79,27 @@ on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 - metadata usually lives in separate tables
 - one analysis often combines animals, deployments, treatments, and observations
 
-## Join patterns to introduce
+## Join Patterns
 
 - `LEFT JOIN` to keep all sensor records and add context when available
 - `INNER JOIN` when you only want matched records
+- `FULL OUTER JOIN` when you want to see all records from both tables
 - multi-table joins across animals, devices, and deployments
 - grouped summaries after joins
 
-## Join example
+## Left Join
+
+![](docs/images/left-join.png)^[https://blog.codinghorror.com/a-visual-explanation-of-sql-joins/]
+
+## Inner Join
+
+![](docs/images/inner-join.png)^[https://blog.codinghorror.com/a-visual-explanation-of-sql-joins/]
+
+## Full Outer Join
+
+![](docs/images/full-outer-join.png)^[https://blog.codinghorror.com/a-visual-explanation-of-sql-joins/]
+
+## Join SQL Example
 
 ```sql
 SELECT
