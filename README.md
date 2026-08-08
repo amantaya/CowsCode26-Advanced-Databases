@@ -6,7 +6,7 @@ Reveal.js slides for a 1-hour workshop on advanced databases for precision lives
 
 The slides for this workshop are available at:
 
-- [https://amantaya.github.io/CowsCode26-Advanced-Databases/](https://amantaya.github.io/CowsCode26-Advanced-Databases/)
+- [https://amantaya.github.io/CowsCode26-Advanced-Databases/#/title-slide](https://amantaya.github.io/CowsCode26-Advanced-Databases/#/title-slide)
 
 ## Topics included
 
