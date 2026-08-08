@@ -17,7 +17,13 @@ library(duckdb)
 con <- dbConnect(duckdb(), dbdir = ":memory:")
 on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
-try(dbExecute(con, "INSTALL spatial"), silent = TRUE)
+install_result <- try(dbExecute(con, "INSTALL spatial"), silent = TRUE)
+if (inherits(install_result, "try-error") || !dbIsValid(con)) {
+  if (dbIsValid(con)) {
+    dbDisconnect(con, shutdown = TRUE)
+  }
+  con <- dbConnect(duckdb(), dbdir = ":memory:")
+}
 dbExecute(con, "LOAD spatial")
 
 paddocks <- data.frame(
