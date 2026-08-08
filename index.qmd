@@ -41,16 +41,14 @@ This session is built for decisions, tradeoffs, and practical next steps.
 | 0:40-0:55 | Topic 3: time series |
 | 0:55-1:00 | Wrap-up and next steps |
 
-## Shared foundation
-
-### Typical research data stack
+## Typical research data stack
 
 - device streams: GPS fixes, accelerometer bursts, derived activity scores
 - context tables: animal metadata, treatment groups, pasture assignments
 - environmental layers: weather, vegetation, water points, paddock boundaries
 - outputs: summaries, movement metrics, maps, figures, reproducible tables
 
-### What breaks first
+## What breaks first
 
 - millions of rows per deployment
 - repeated joins on timestamp and animal ID
