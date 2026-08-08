@@ -9,7 +9,8 @@ format:
     slide-number: true
     toc: false
     transition: fade
-    incremental: false
+    incremental: true
+    controls: true
     output-file: index.html
 ---
 
@@ -74,20 +75,20 @@ on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
 ## Topic 1: joins
 
-### Why joins matter in wearable studies
+## Why joins matter in wearable studies
 
 - sensor records rarely mean much alone
 - metadata usually lives in separate tables
 - one analysis often combines animals, deployments, treatments, and observations
 
-### Join patterns to introduce
+## Join patterns to introduce
 
 - `LEFT JOIN` to keep all sensor records and add context when available
 - `INNER JOIN` when you only want matched records
 - multi-table joins across animals, devices, and deployments
 - grouped summaries after joins
 
-### Join example
+## Join example
 
 ```sql
 SELECT
@@ -101,7 +102,7 @@ LEFT JOIN animals
 ORDER BY gps.animal_id, gps.ts;
 ```
 
-### R example in this repo
+## R example in this repo
 
 - `scripts/01_joins_duckdb.R`
 - creates toy animal and GPS tables
@@ -109,20 +110,20 @@ ORDER BY gps.animal_id, gps.ts;
 
 ## Topic 2: spatial analysis
 
-### Why spatial analysis belongs in the database
+## Why spatial analysis belongs in the database
 
 - GPS workflows are mostly joins, filters, and aggregation with geometry attached
 - moving points in and out of separate GIS tools can fragment the pipeline
 - database-side spatial logic is reproducible and easier to re-run
 
-### Common Spatial Questions
+## Common Spatial Questions
 
 - Which paddock was the animal in at a given time?
 - How much time was spent near water or shade?
 - Which animals crossed a virtual fence line?
 - How do movement metrics differ by pasture?
 
-### Spatial example with DuckDB
+## Spatial example with DuckDB
 
 ```sql
 INSTALL spatial;
@@ -138,29 +139,29 @@ JOIN paddocks
 GROUP BY 1, 2;
 ```
 
-### R example in this repo
+## R example in this repo
 
 - `scripts/02_spatial_duckdb.R`
 - loads the DuckDB spatial extension
 - creates toy paddocks and GPS points from WKT
 - uses `ST_Within` to classify points by paddock
 
-## Topic 3: time series
+# Topic 3: time series
 
-### Why time-series structure matters
+## Why time-series structure matters
 
 - wearable data arrive in order and are interpreted in sequence
 - analysts often need rolling summaries, time gaps, and daily aggregation
 - timestamps, timezone policy, and deployment intervals have to be consistent
 
-### Time-series questions to highlight
+## Time-series questions to highlight
 
 - when did the collar stop transmitting?
 - how active was each animal by hour or day?
 - where are the large gaps or bursts in the sensor stream?
 - how do we summarize high-frequency observations without losing provenance?
 
-### Time-series example
+## Time-series example
 
 ```sql
 SELECT
@@ -173,7 +174,7 @@ FROM accel_events
 ORDER BY animal_id, ts;
 ```
 
-### R example in this repo
+## R example in this repo
 
 - `scripts/03_time_series_duckdb.R`
 - creates a toy activity stream
@@ -182,14 +183,14 @@ ORDER BY animal_id, ts;
 
 ## Workflow recommendations
 
-### A practical path for this audience
+## A practical path for this audience
 
 1. Keep raw files immutable.
 2. Load cleaned tables into DuckDB through R.
 3. Use SQL for joins, spatial filters, and time-based summaries.
 4. Export small derived tables for plotting and modeling.
 
-### Common mistakes
+## Common mistakes
 
 - doing all joins manually in spreadsheets
 - reading the same large CSV files repeatedly in notebooks
@@ -204,13 +205,13 @@ ORDER BY animal_id, ts;
 
 ## Wrap-up
 
-### If the audience remembers only three things
+## If You Remember Only 3 Things
 
 1. Databases help most when they remove repeated manual joins and summaries.
 2. Spatial and time-series logic can live in the same analytical workflow.
 3. `DBI` plus `duckdb` is a practical on-ramp for R-based research teams.
 
-### Next steps for the lab
+## Next Steps
 
 - port one real analysis from CSV-driven code to DuckDB
 - standardize one relational schema for animals, deployments, and observations
@@ -218,4 +219,4 @@ ORDER BY animal_id, ts;
 
 ## Discussion
 
-Which of these topics should become the next hands-on session?
+Which of these topics would you like to see as the next hands-on session?
