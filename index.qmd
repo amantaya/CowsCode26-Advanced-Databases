@@ -1,6 +1,6 @@
 ---
 title: "Advanced Databases for Precision Livestock Research"
-subtitle: "Introductory database topics with DuckDB and DBI examples in R"
+subtitle: "Advanced Database Topics with DuckDB and DBI examples in R"
 author: ""
 date: today
 format:
