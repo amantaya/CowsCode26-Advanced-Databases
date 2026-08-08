@@ -1,7 +1,7 @@
 ---
 title: "Advanced Databases for Precision Livestock Research"
-subtitle: "Advanced Database Topics with DuckDB and DBI examples in R"
-author: ""
+subtitle: "1-Hour Hands-On Workshop"
+author: "Andrew Antaya"
 date: today
 format:
   revealjs:
