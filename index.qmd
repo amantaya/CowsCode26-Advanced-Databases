@@ -117,7 +117,7 @@ ORDER BY gps.animal_id, gps.ts;
 - moving points in and out of separate GIS tools can fragment the pipeline
 - database-side spatial logic is reproducible and easier to re-run
 
-### Spatial questions your audience will recognize
+### Common Spatial Questions
 
 - Which paddock was the animal in at a given time?
 - How much time was spent near water or shade?
