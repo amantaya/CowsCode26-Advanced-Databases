@@ -4,6 +4,7 @@ project:
 
 website:
   title: "Advanced Databases for Precision Livestock Research"
+  site-url: "https://amantaya.github.io/CowsCode26-Advanced-Databases/"
   navbar:
     right:
       - text: "Slides"
