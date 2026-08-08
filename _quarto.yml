@@ -1,0 +1,27 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Advanced Databases for Precision Livestock Research"
+  navbar:
+    right:
+      - text: "Slides"
+        href: index.qmd
+
+format:
+  revealjs:
+    theme: [default, styles.css]
+    slide-number: c/t
+    hash: true
+    history: false
+    controls: true
+    progress: true
+    chalkboard: false
+    transition: fade
+    background-transition: fade
+    link-external-newwindow: true
+    footer: "Advanced Databases Workshop"
+
+execute:
+  echo: false

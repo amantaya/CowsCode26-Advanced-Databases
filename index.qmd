@@ -1,0 +1,284 @@
+---
+title: "Advanced Databases for Precision Livestock Research"
+subtitle: "A choose-your-own-adventure workshop for GPS and accelerometer studies"
+author: ""
+date: today
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    toc: false
+    transition: fade
+    incremental: false
+    output-file: index.html
+---
+
+## Why this workshop?
+
+Early-career faculty and graduate researchers in precision livestock technology often face the same pattern:
+
+- wearable data are large, messy, and joined across many sources
+- geospatial workflows need more than spreadsheets and ad hoc scripts
+- the best database choice depends on the research question, not on habit
+
+This session is built for decisions, tradeoffs, and practical next steps.
+
+## How this works
+
+You choose where we go deeper.
+
+1. We start with a shared foundation.
+2. At each decision point, the room picks one branch.
+3. The slide deck keeps links to all branches so you can reuse it later.
+
+## One-hour route
+
+| Time | Segment |
+|---|---|
+| 0:00-0:10 | Shared foundation: data shapes, bottlenecks, and design choices |
+| 0:10-0:20 | Decision point 1 |
+| 0:20-0:35 | Deep dive branch |
+| 0:35-0:45 | Decision point 2 |
+| 0:45-0:55 | Second branch |
+| 0:55-1:00 | Wrap-up and next steps |
+
+## Shared foundation
+
+### Typical research data stack
+
+- device streams: GPS fixes, accelerometer bursts, derived activity scores
+- context tables: animal metadata, treatment groups, pasture assignments
+- environmental layers: weather, vegetation, water points, paddock boundaries
+- outputs: summaries, movement metrics, maps, figures, reproducible tables
+
+### What breaks first
+
+- millions of rows per deployment
+- repeated joins on timestamp and animal ID
+- geospatial operations done outside the analysis pipeline
+- multiple file formats with inconsistent metadata
+- no clear separation between raw, cleaned, and derived data
+
+## Decision point 1
+
+### Pick the first branch
+
+- [Branch A: Spatial analysis with DuckDB](#/branch-a-spatial-analysis-with-duckdb)
+- [Branch B: Which database type fits which research question?](#/branch-b-which-database-type-fits-which-research-question)
+- [Branch C: Time-series architecture for wearable sensor pipelines](#/branch-c-time-series-architecture-for-wearable-sensor-pipelines)
+
+## {#branch-a-spatial-analysis-with-duckdb} Branch A: Spatial analysis with DuckDB
+
+### Why DuckDB fits this audience
+
+- runs locally with no server to maintain
+- queries flat files directly, including Parquet
+- works well for exploratory analysis on field-study datasets
+- supports modern analytics workflows in R and Python
+
+### High-value use cases
+
+- join GPS tracks to paddock polygons
+- summarize time spent near water, feed, or fence lines
+- aggregate movement by day, treatment, or weather window
+- prototype before moving to a heavier database system
+
+### Example workflow
+
+```sql
+INSTALL spatial;
+LOAD spatial;
+
+SELECT
+  gps.animal_id,
+  date_trunc('day', gps.ts) AS study_day,
+  paddocks.paddock_name,
+  COUNT(*) AS fixes,
+  AVG(gps.speed_m_s) AS avg_speed
+FROM read_parquet('data/gps/*.parquet') AS gps
+JOIN st_read('data/paddocks.geojson') AS paddocks
+  ON ST_Within(
+    ST_Point(gps.longitude, gps.latitude),
+    paddocks.geom
+  )
+GROUP BY 1, 2, 3
+ORDER BY 2, 1;
+```
+
+### What to emphasize live
+
+- keep raw sensor files immutable
+- convert repeated CSV reads into Parquet early
+- push filtering, joins, and aggregation into SQL
+- use notebooks for interpretation, not for row-by-row plumbing
+
+### Limits of DuckDB
+
+- not the best choice for many concurrent writers
+- long-running operational systems may need Postgres or cloud warehouses
+- streaming ingestion usually needs adjacent tooling
+
+## {#branch-b-which-database-type-fits-which-research-question} Branch B: Which database type fits which research question?
+
+### A pragmatic taxonomy
+
+| Database type | Best fit | Research example |
+|---|---|---|
+| DuckDB / SQLite | single-user analytics, reproducible local workflows | one graduate student analyzing one field season |
+| PostgreSQL | shared relational source of truth | lab-wide metadata, cleaned events, and QA tables |
+| PostGIS | spatially aware relational workflows | GPS points, paddocks, buffers, and route summaries |
+| Time-series databases | high-frequency append-heavy telemetry | second-level accelerometer or sensor monitoring |
+| Document stores | irregular semi-structured records | device diagnostics, event logs, heterogeneous annotations |
+| Data lake + query engine | large multi-year, multi-project archives | cross-study sensor archives in Parquet |
+
+### Decision framework
+
+Choose based on:
+
+- who needs concurrent access
+- whether the schema is stable or evolving
+- whether spatial operators are core to the workflow
+- whether write speed or analytic flexibility matters more
+- how much systems administration the lab can actually support
+
+### A useful progression for small labs
+
+1. Start with tidy files plus DuckDB.
+2. Add PostgreSQL when collaboration and governance become painful.
+3. Add PostGIS when spatial joins become routine.
+4. Add cloud or time-series infrastructure only when scale clearly demands it.
+
+## {#branch-c-time-series-architecture-for-wearable-sensor-pipelines} Branch C: Time-series architecture for wearable sensor pipelines
+
+### Core design questions
+
+- what is the canonical timestamp and timezone policy?
+- how do you preserve burst structure for accelerometers?
+- what level of granularity should be stored raw versus derived?
+- where do QA flags live?
+
+### Practical schema pattern
+
+| Layer | Purpose | Example tables |
+|---|---|---|
+| raw | immutable ingest | gps_raw, accel_raw |
+| standardized | harmonized columns and units | gps_standardized, accel_standardized |
+| curated | QA-applied records | gps_curated, accel_curated |
+| derived | features for analysis | step_length, grazing_bouts, rest_bouts |
+| reporting | summaries for figures and manuscripts | daily_animal_summary |
+
+### Common mistakes
+
+- overwriting raw data during cleaning
+- mixing UTC and local timestamps
+- storing derived metrics without versioned code provenance
+- ignoring sensor deployment metadata
+
+## Decision point 2
+
+### Pick the second branch
+
+- [Branch D: Data modeling for animal studies](#/branch-d-data-modeling-for-animal-studies)
+- [Branch E: Query optimization and file formats](#/branch-e-query-optimization-and-file-formats)
+- [Branch F: Reproducibility, governance, and sharing](#/branch-f-reproducibility-governance-and-sharing)
+
+## {#branch-d-data-modeling-for-animal-studies} Branch D: Data modeling for animal studies
+
+### Model entities explicitly
+
+- animal
+- device
+- deployment interval
+- observation stream
+- paddock or location context
+- event or intervention
+
+### Why it matters
+
+- animals change devices
+- devices are redeployed across seasons
+- treatment assignments change over time
+- location context can be many-to-one and time-bounded
+
+### Minimal relational pattern
+
+| Table | Key columns |
+|---|---|
+| animals | animal_id, breed, sex, birth_date |
+| devices | device_id, manufacturer, firmware_version |
+| deployments | deployment_id, animal_id, device_id, start_ts, end_ts |
+| gps_fixes | deployment_id, ts, latitude, longitude |
+| accel_windows | deployment_id, ts_start, axis_x, axis_y, axis_z |
+| treatments | animal_id, effective_start, effective_end, treatment_group |
+
+## {#branch-e-query-optimization-and-file-formats} Branch E: Query optimization and file formats
+
+### Fast wins before database tuning
+
+- convert CSV to Parquet
+- partition by study, year, or deployment when it helps access patterns
+- store numeric types correctly
+- avoid repeated parsing of timestamps from strings
+
+### Why Parquet matters here
+
+- columnar reads reduce unnecessary I/O
+- compression lowers storage and sync costs
+- schema is explicit
+- works well with DuckDB, Arrow, and modern notebooks
+
+### Practical optimization checklist
+
+1. Filter early.
+2. Select only needed columns.
+3. Materialize recurring intermediate tables.
+4. Benchmark with realistic subsets.
+5. Keep geospatial columns in a format your toolchain reads efficiently.
+
+## {#branch-f-reproducibility-governance-and-sharing} Branch F: Reproducibility, governance, and sharing
+
+### What labs usually need before "big data" tooling
+
+- a naming convention for raw and processed data
+- a data dictionary that lives with the project
+- versioned extraction and cleaning scripts
+- clear ownership of authoritative tables
+- documented rules for missingness and exclusions
+
+### Governance questions for wearables research
+
+- how do you track firmware changes?
+- how do you record lost collars, dead batteries, and clock drift?
+- where do QA decisions become auditable?
+- how do collaborators reproduce a published figure six months later?
+
+### Minimal reproducibility stack
+
+- Parquet for curated analytical data
+- DuckDB or PostgreSQL for structured querying
+- Quarto or notebooks for literate analysis
+- GitHub for versioning code, docs, and workshop materials
+
+## Suggested live polling prompts
+
+- Which pain point is bigger right now: scale, spatial joins, or reproducibility?
+- How many of you are still reading sensor CSVs directly into notebooks every time?
+- Who needs a collaborative database this year, not "someday"?
+
+## Wrap-up
+
+### If the audience remembers only three things
+
+1. Choose the database that matches the research workflow you actually have.
+2. Treat spatial and time-series structure as first-class design inputs.
+3. Invest early in reproducible layers: raw, standardized, curated, and derived.
+
+### Next steps for the lab
+
+- pilot one DuckDB plus Parquet workflow on an existing dataset
+- map one recurring analysis to a relational schema
+- define a shared metadata and naming standard before the next field season
+
+## Discussion
+
+Which branch should become a hands-on follow-up workshop?
