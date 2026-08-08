@@ -73,7 +73,7 @@ on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
 ## Topic 1: joins
 
-## Why joins matter in wearable studies
+Why joins matter in wearable studies
 
 - sensor records rarely mean much alone
 - metadata usually lives in separate tables
@@ -115,13 +115,15 @@ ORDER BY gps.animal_id, gps.ts;
 
 ## R example in this repo
 
+Open up and run:
+
 - `scripts/01_joins_duckdb.R`
 - creates toy animal and GPS tables
 - demonstrates `LEFT JOIN` and a grouped summary
 
 ## Topic 2: spatial analysis
 
-## Why spatial analysis belongs in the database
+Why spatial analysis belongs in the database
 
 - GPS workflows are mostly joins, filters, and aggregation with geometry attached
 - moving points in and out of separate GIS tools can fragment the pipeline
@@ -152,6 +154,8 @@ GROUP BY 1, 2;
 
 ## R example in this repo
 
+Open up and run:
+
 - `scripts/02_spatial_duckdb.R`
 - loads the DuckDB spatial extension
 - creates toy paddocks and GPS points from WKT
@@ -159,7 +163,7 @@ GROUP BY 1, 2;
 
 # Topic 3: time series
 
-## Why time-series structure matters
+Why time-series structure matters
 
 - wearable data arrive in order and are interpreted in sequence
 - analysts often need rolling summaries, time gaps, and daily aggregation
@@ -187,6 +191,8 @@ ORDER BY animal_id, ts;
 
 ## R example in this repo
 
+Open up and run:
+
 - `scripts/03_time_series_duckdb.R`
 - creates a toy activity stream
 - uses window functions for lagged timestamps and gap detection
@@ -208,21 +214,15 @@ ORDER BY animal_id, ts;
 - mixing raw, cleaned, and derived data in one table
 - delaying timestamp standards until late in the project
 
-## Files included in this repo
-
-- slides: `index.qmd`
-- Quarto config: `_quarto.yml`
-- R examples: `scripts/01_joins_duckdb.R`, `scripts/02_spatial_duckdb.R`, `scripts/03_time_series_duckdb.R`
-
 ## Wrap-up
 
-## If You Remember Only 3 Things
+If You Remember Only 3 Things
 
 1. Databases help most when they remove repeated manual joins and summaries.
 2. Spatial and time-series logic can live in the same analytical workflow.
 3. `DBI` plus `duckdb` is a practical on-ramp for R-based research teams.
 
-## Next Steps
+## Next Steps (On Your Own)
 
 - port one real analysis from CSV-driven code to DuckDB
 - standardize one relational schema for animals, deployments, and observations
