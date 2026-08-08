@@ -71,7 +71,7 @@ con <- dbConnect(duckdb(), dbdir = ":memory:")
 on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 ```
 
-## Topic 1: joins
+## Topic 1: Joins
 
 Why joins matter in wearable studies
 
@@ -121,7 +121,7 @@ Open up and run:
 - creates toy animal and GPS tables
 - demonstrates `LEFT JOIN` and a grouped summary
 
-## Topic 2: spatial analysis
+## Topic 2: Spatial Analysis
 
 Why spatial analysis belongs in the database
 
@@ -161,7 +161,7 @@ Open up and run:
 - creates toy paddocks and GPS points from WKT
 - uses `ST_Within` to classify points by paddock
 
-# Topic 3: time series
+## Topic 3: Time Series
 
 Why time-series structure matters
 
