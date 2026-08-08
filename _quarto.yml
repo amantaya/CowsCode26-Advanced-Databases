@@ -12,7 +12,7 @@ website:
 
 format:
   revealjs:
-    theme: [default, styles.css]
+    theme: [default]
     slide-number: c/t
     hash: true
     history: false
