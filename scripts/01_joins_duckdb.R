@@ -1,4 +1,4 @@
-required_packages <- c("DBI", "duckdb")
+required_packages <- c("DBI", "duckdb", "here")
 missing_packages <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
 
 if (length(missing_packages) > 0) {
@@ -48,9 +48,73 @@ gps_fixes <- data.frame(
     speed_m_s = c(0.8, 1.1, 0.5, 0.7, 1.4)
 )
 
+  weights <- data.frame(
+    animal_id = c("A01", "A01", "A02", "A03"),
+    ts = as.POSIXct(
+      c(
+        "2026-06-01 05:50:00",
+        "2026-06-01 11:50:00",
+        "2026-06-01 05:55:00",
+        "2026-06-01 06:00:00"
+      ),
+      tz = "UTC"
+    ),
+    weight_kg = c(542.2, 543.0, 498.5, 561.8)
+  )
+
 con <- ensure_duckdb_connection(con)
-dbWriteTable(con, "animals", animals, overwrite = TRUE)
-dbWriteTable(con, "gps_fixes", gps_fixes, overwrite = TRUE)
+
+  # Recreate tables with relational constraints for ERD visualization.
+  dbExecute(con, "DROP TABLE IF EXISTS weights")
+  dbExecute(con, "DROP TABLE IF EXISTS gps_fixes")
+  dbExecute(con, "DROP TABLE IF EXISTS animals")
+
+  dbExecute(
+    con,
+    "
+    CREATE TABLE animals (
+      animal_id VARCHAR PRIMARY KEY,
+      treatment_group VARCHAR NOT NULL
+    )
+    "
+  )
+
+  dbExecute(
+    con,
+    "
+    CREATE TABLE gps_fixes (
+      fix_id BIGINT PRIMARY KEY,
+      animal_id VARCHAR NOT NULL,
+      ts TIMESTAMP NOT NULL,
+      speed_m_s DOUBLE NOT NULL,
+      CONSTRAINT fk_gps_animal
+        FOREIGN KEY (animal_id)
+        REFERENCES animals(animal_id)
+    )
+    "
+  )
+
+  dbExecute(
+    con,
+    "
+    CREATE TABLE weights (
+      animal_id VARCHAR NOT NULL,
+      ts TIMESTAMP NOT NULL,
+      weight_kg DOUBLE NOT NULL,
+      PRIMARY KEY (animal_id, ts),
+      CONSTRAINT fk_weights_animal
+        FOREIGN KEY (animal_id)
+        REFERENCES animals(animal_id)
+    )
+    "
+  )
+
+  gps_fixes$fix_id <- seq_len(nrow(gps_fixes))
+  gps_fixes <- gps_fixes[, c("fix_id", "animal_id", "ts", "speed_m_s")]
+
+  dbAppendTable(con, "animals", animals)
+  dbAppendTable(con, "gps_fixes", gps_fixes)
+  dbAppendTable(con, "weights", weights)
 
 joined <- dbGetQuery(
     con,
@@ -59,28 +123,17 @@ joined <- dbGetQuery(
     gps.animal_id,
     gps.ts,
     animals.treatment_group,
-    gps.speed_m_s
+    gps.speed_m_s,
+    w.weight_kg
   FROM gps_fixes AS gps
   LEFT JOIN animals
     ON gps.animal_id = animals.animal_id
+  LEFT JOIN weights AS w
+    ON gps.animal_id = w.animal_id
   ORDER BY gps.animal_id, gps.ts
   "
 )
 
-summary_by_group <- dbGetQuery(
-    con,
-    "
-  SELECT
-    animals.treatment_group,
-    COUNT(*) AS n_fixes,
-    AVG(gps.speed_m_s) AS mean_speed_m_s
-  FROM gps_fixes AS gps
-  INNER JOIN animals
-    ON gps.animal_id = animals.animal_id
-  GROUP BY animals.treatment_group
-  ORDER BY animals.treatment_group
-  "
-)
-
 print(joined)
-print(summary_by_group)
+
+# Demo on viewing the Entity Relationship Diagram in DBeaver
