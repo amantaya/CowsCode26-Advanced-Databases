@@ -1,6 +1,6 @@
 ---
 title: "Advanced Databases for Precision Livestock Research"
-subtitle: "1-Hour Hands-On Workshop"
+subtitle: "Cows and Code 2026"
 author: "Andrew Antaya"
 date: today
 format:
