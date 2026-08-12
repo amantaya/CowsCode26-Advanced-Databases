@@ -89,6 +89,7 @@ Why joins matter in wearable studies
 - metadata usually lives in separate tables
 - one analysis often combines animals, deployments, treatments, and observations
 
+
 ## Join Patterns
 
 - `LEFT JOIN` to keep all sensor records and add context when available
@@ -238,4 +239,4 @@ If You Remember Only 3 Things
 
 ## Discussion
 
-Which of these topics would you like to see as the next hands-on session?
+Which of these topics would you like to know more about? What would you like to see in a follow-up workshop?
