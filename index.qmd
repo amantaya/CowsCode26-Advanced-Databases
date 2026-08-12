@@ -22,7 +22,7 @@ Early-career faculty and graduate researchers in precision livestock technology 
 - geospatial workflows need more than spreadsheets and ad hoc scripts
 - the best database and analytical process choice depends on the research question
 
-## What we will cover
+## What We Will Cover
 
 - why databases help with wearable research workflows
 - relational joins for combining sensor and metadata tables
@@ -71,6 +71,16 @@ con <- dbConnect(duckdb(), dbdir = ":memory:")
 on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 ```
 
+## How to View `.duckdb` Files
+
+- DBeaver is a free GUI for DuckDB and supports 100+ other database engines
+
+![](docs/images/dbeaver.png)^[https://dbeaver.io/]
+
+## Live DBeaver Demo
+
+_switch to live demo_
+
 ## Topic 1: Joins
 
 Why joins matter in wearable studies
@@ -113,7 +123,7 @@ LEFT JOIN animals
 ORDER BY gps.animal_id, gps.ts;
 ```
 
-## R example in this repo
+## R Example In This Repo
 
 Open up and run:
 
@@ -152,7 +162,7 @@ JOIN paddocks
 GROUP BY 1, 2;
 ```
 
-## R example in this repo
+## R Example In This Repo
 
 Open up and run:
 
@@ -169,14 +179,14 @@ Why time-series structure matters
 - analysts often need rolling summaries, time gaps, and daily aggregation
 - timestamps, timezone policy, and deployment intervals have to be consistent
 
-## Time-series questions to highlight
+## Common Time-Series Questions
 
 - when did the collar stop transmitting?
 - how active was each animal by hour or day?
 - where are the large gaps or bursts in the sensor stream?
 - how do we summarize high-frequency observations without losing provenance?
 
-## Time-series example
+## Time-Series Example
 
 ```sql
 SELECT
@@ -189,7 +199,7 @@ FROM accel_events
 ORDER BY animal_id, ts;
 ```
 
-## R example in this repo
+## R Example In This Repo
 
 Open up and run:
 
