@@ -9,7 +9,7 @@ format:
     slide-number: true
     toc: false
     transition: fade
-    incremental: true
+    incremental: false
     controls: true
     output-file: index.html
 ---
