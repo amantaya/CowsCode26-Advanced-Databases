@@ -198,16 +198,14 @@ Open up and run:
 - uses window functions for lagged timestamps and gap detection
 - rolls up activity by hour
 
-## Workflow recommendations
-
-## A practical path for this audience
+## Workflow Recommendations
 
 1. Keep raw files immutable.
 2. Load cleaned tables into DuckDB through R.
 3. Use SQL for joins, spatial filters, and time-based summaries.
 4. Export small derived tables for plotting and modeling.
 
-## Common mistakes
+## Common Mistakes
 
 - doing all joins manually in spreadsheets
 - reading the same large CSV files repeatedly in notebooks
