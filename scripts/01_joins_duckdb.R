@@ -14,7 +14,9 @@ if (length(missing_packages) > 0) {
 library(DBI)
 library(duckdb)
 
-con <- dbConnect(duckdb(), dbdir = ":memory:")
+dbdir <- here::here("data", "advanced-databases.duckdb")
+
+con <- dbConnect(duckdb(), dbdir = dbdir)
 on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
 ensure_duckdb_connection <- function(con) {
@@ -22,7 +24,7 @@ ensure_duckdb_connection <- function(con) {
     if (inherits(con, "DBIConnection") && dbIsValid(con)) {
         return(con)
     }
-    dbConnect(duckdb(), dbdir = ":memory:")
+    dbConnect(duckdb(), dbdir = dbdir)
 }
 
 animals <- data.frame(
