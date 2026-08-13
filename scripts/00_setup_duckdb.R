@@ -75,7 +75,6 @@ write.csv(gps_fixes, gps_fixes_csv, row.names = FALSE)
 write.csv(weights, weights_csv, row.names = FALSE)
 
 con <- dbConnect(duckdb(), dbdir = dbdir)
-on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
 # Recreate tables with explicit types and relational constraints.
 dbExecute(con, "DROP TABLE IF EXISTS weights")
@@ -185,3 +184,5 @@ cat("Setup complete. CSV files written to:", csv_dir, "\n")
 cat("DuckDB database initialized at:", dbdir, "\n")
 
 cat("Rows generated - animals:", n_animals, "gps_fixes:", n_gps_fixes, "weights:", n_weights, "\n")
+
+dbDisconnect(con, shutdown = TRUE)
