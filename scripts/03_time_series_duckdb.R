@@ -30,9 +30,9 @@ ensure_duckdb_connection <- function(con) {
 
 con <- ensure_duckdb_connection(con)
 
-if (!dbExistsTable(con, "accel")) {
+if (!dbExistsTable(con, "accel_tbl")) {
   stop(
-    "Missing required table in DuckDB: accel. Run scripts/00_setup_duckdb.R first.",
+    "Missing required table in DuckDB: accel_tbl. Run scripts/00_setup_duckdb.R first.",
     call. = FALSE
   )
 }
@@ -47,7 +47,7 @@ with_gaps <- dbGetQuery(
     activity_count,
     LAG(ts) OVER (PARTITION BY animal_id ORDER BY ts) AS previous_ts,
     epoch(ts) - epoch(LAG(ts) OVER (PARTITION BY animal_id ORDER BY ts)) AS gap_seconds
-  FROM accel
+  FROM accel_tbl
   ORDER BY animal_id, ts
   "
 )
@@ -59,7 +59,7 @@ week_of_data <- dbGetQuery(
     animal_id,
     ts,
     activity_count
-  FROM accel
+  FROM accel_tbl
   WHERE ts >= TIMESTAMP '2026-06-01 00:00:00'
     AND ts < TIMESTAMP '2026-06-08 00:00:00'
   ORDER BY animal_id, ts
@@ -75,7 +75,7 @@ hourly_summary <- dbGetQuery(
     COUNT(*) AS n_windows,
     AVG(activity_count) AS mean_activity_count,
     SUM(activity_count) AS total_activity_count
-  FROM accel
+  FROM accel_tbl
   GROUP BY animal_id, hour_start
   ORDER BY animal_id, hour_start
   "
