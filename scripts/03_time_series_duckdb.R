@@ -37,7 +37,7 @@ if (!dbExistsTable(con, "accel_tbl")) {
   )
 }
 
-# 5 second epoch aggregation
+# Query that demonstrates 5 second epoch aggregation
 epoch_5s <- dbGetQuery(
   con,
   "
@@ -70,8 +70,8 @@ week_of_data <- dbGetQuery(
   FROM accel_tbl
   WHERE ts >= TIMESTAMP '2026-06-01 00:00:00'
     AND ts < TIMESTAMP '2026-06-08 00:00:00'
-  ORDER BY animal_id, ts
+    AND animal_id = 'A1361'
   "
 )
 
-print(week_of_data)
+View(week_of_data)
