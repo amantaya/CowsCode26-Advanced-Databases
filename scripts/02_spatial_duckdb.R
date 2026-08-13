@@ -38,8 +38,8 @@ pastures <- data.frame(
   stringsAsFactors = FALSE
 )
 
-if (!dbExistsTable(con, "gps_fixes")) {
-  stop("Missing required table in DuckDB: gps_fixes. Run scripts/00_setup_duckdb.R first.", call. = FALSE)
+if (!dbExistsTable(con, "gps_tbl")) {
+  stop("Missing required table in DuckDB: gps_tbl. Run scripts/00_setup_duckdb.R first.", call. = FALSE)
 }
 
 dbWriteTable(con, "pastures", pastures, overwrite = TRUE)
@@ -59,12 +59,12 @@ dbExecute(
 dbExecute(
   con,
   "
-  CREATE OR REPLACE TABLE gps_points AS
+  CREATE OR REPLACE TABLE gps_tbl_points AS
   SELECT
     animal_id,
     ts,
     ST_Point(longitude, latitude) AS geom
-  FROM gps_fixes
+  FROM gps_tbl
   "
 )
 
@@ -72,13 +72,13 @@ classified_points <- dbGetQuery(
   con,
   "
   SELECT
-    gps.animal_id,
-    gps.ts,
+    gps_tbl.animal_id,
+    gps_tbl.ts,
     pastures.pastures_name
-  FROM gps_points AS gps
+  FROM gps_tbl_points AS gps_tbl
   JOIN pastures
-    ON ST_Within(gps.geom, pastures.geom)
-  ORDER BY gps.ts
+    ON ST_Within(gps_tbl.geom, pastures.geom)
+  ORDER BY gps_tbl.ts
   "
 )
 
@@ -88,9 +88,9 @@ fix_counts <- dbGetQuery(
   SELECT
     pastures.pastures_name,
     COUNT(*) AS fixes_in_pastures
-  FROM gps_points AS gps
+  FROM gps_tbl_points AS gps_tbl
   JOIN pastures
-    ON ST_Within(gps.geom, pastures.geom)
+    ON ST_Within(gps_tbl.geom, pastures.geom)
   GROUP BY pastures.pastures_name
   ORDER BY pastures.pastures_name
   "
