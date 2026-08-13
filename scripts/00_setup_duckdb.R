@@ -37,7 +37,7 @@ animal_ids <- sprintf("A%04d", seq_len(n_animals))
 animals <- data.frame(
     animal_id = animal_ids,
     treatment_group = sample(
-        c("control", "supplement", "pasture_plus"),
+        c("control", "supplement", "pasture"),
         n_animals,
         replace = TRUE,
         prob = c(0.45, 0.35, 0.20)
