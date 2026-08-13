@@ -112,7 +112,7 @@ inner_join <- dbGetQuery(
   "
 )
 
-dplyr::glimpse(inner_join)
+View(inner_join)
 
 # Full join of weights_tbl and animals_tbl
 full_join <- dbGetQuery(
@@ -134,7 +134,7 @@ full_join <- dbGetQuery(
   "
 )
 
-dplyr::glimpse(full_join)
+View(full_join)
 
 # Summary bar chart: count of rows by match_status, per join type
 # This is the key visual for the audience -- it makes literal what
@@ -174,12 +174,16 @@ complex_join_sql <- "
     gps_tbl.ts,
     animals_tbl.treatment_group,
     gps_tbl.speed_m_s,
-    w.weight_kg
+    w.weight_kg,
+    accel.timestamp AS accel_ts,
+    accel.activity_count
   FROM gps_tbl AS gps_tbl
   LEFT JOIN animals_tbl
     ON gps_tbl.animal_id = animals_tbl.animal_id
   LEFT JOIN weights_tbl AS w
     ON gps_tbl.animal_id = w.animal_id
+  LEFT JOIN accel_tbl AS accel
+    ON gps_tbl.animal_id = accel.animal_id
 "
 
 joined <- dbGetQuery(
@@ -187,7 +191,7 @@ joined <- dbGetQuery(
   paste0(complex_join_sql, "\nORDER BY gps_tbl.animal_id, gps_tbl.ts")
 )
 
-print(joined)
+View(joined)
 
 joined_row_count <- dbGetQuery(
   con,
@@ -254,6 +258,6 @@ rows_missing_weights_tbl <- dbGetQuery(
 print(rows_missing_weights_tbl)
 
 
-# NOTES: 
+# NOTES:
 # left_only never appears — weights_tbl has no animal_id missing from animals_tbl, so LEFT/INNER are identical (all matched)
 # RIGHT/FULL show the same small right_only bar (animals in animals_tbl with no weight record)
