@@ -55,18 +55,20 @@ dbExecute(
   "
 )
 
-# This query demonstrates how to create a new table with a geometry column using the ST_Point function.
+# Add a geometry column directly to gps_tbl 
 dbExecute(
   con,
   "
-  CREATE OR REPLACE TABLE gps_tbl AS
-  SELECT
-    animal_id,
-    ts,
-    lat,
-    lon,
-    ST_Point(lon, lat) AS geom
-  FROM gps_tbl
+  ALTER TABLE gps_tbl
+  ADD COLUMN IF NOT EXISTS geom GEOMETRY
+  "
+)
+
+dbExecute(
+  con,
+  "
+  UPDATE gps_tbl
+  SET geom = ST_Point(lon, lat)
   "
 )
 
