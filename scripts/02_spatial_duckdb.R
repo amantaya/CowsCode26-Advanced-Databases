@@ -1,4 +1,4 @@
-required_packages <- c("DBI", "duckdb", "here")
+required_packages <- c("DBI", "duckdb", "here", "ggplot2", "sf")
 missing_packages <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
 
 if (length(missing_packages) > 0) {
@@ -55,13 +55,16 @@ dbExecute(
   "
 )
 
+# This query demonstrates how to create a new table with a geometry column using the ST_Point function.
 dbExecute(
   con,
   "
-  CREATE OR REPLACE TABLE gps_tbl_points AS
+  CREATE OR REPLACE TABLE gps_tbl AS
   SELECT
     animal_id,
     ts,
+    lat,
+    lon,
     ST_Point(lon, lat) AS geom
   FROM gps_tbl
   "
@@ -75,8 +78,10 @@ classified_points <- dbGetQuery(
   SELECT
     gps_tbl.animal_id,
     gps_tbl.ts,
+    gps_tbl.lat,
+    gps_tbl.lon,
     pastures.pastures_name
-  FROM gps_tbl_points AS gps_tbl
+  FROM gps_tbl AS gps_tbl
   JOIN pastures
     ON ST_Within(gps_tbl.geom, pastures.geom)
   ORDER BY gps_tbl.ts
@@ -85,64 +90,35 @@ classified_points <- dbGetQuery(
 
 View(classified_points)
 
-# This query demonstrates a summary function that counts the number of GPS fixes within each pasture.
-fix_counts <- dbGetQuery(
+# Plotting data for ggplot2 maps.
+pastures_wkt <- dbGetQuery(
   con,
   "
   SELECT
-    pastures.pastures_name,
-    COUNT(*) AS fixes_in_pastures
-  FROM gps_tbl_points AS gps_tbl
-  JOIN pastures
-    ON ST_Within(gps_tbl.geom, pastures.geom)
-  GROUP BY pastures.pastures_name
-  ORDER BY pastures.pastures_name
+    pastures_name,
+    ST_AsText(geom) AS wkt
+  FROM pastures
   "
 )
 
-print(fix_counts)
+pastures_sf <- sf::st_as_sf(pastures_wkt, wkt = "wkt", crs = 4326)
 
-# This query demonstrates nearest fixes to a water point using ST_Distance.
-# Because the geometries are lon/lat, distance is reported in degree units.
-distance_to_water <- dbGetQuery(
-  con,
-  "
-  WITH water AS (
-    SELECT ST_Point(-98.7, 35.8) AS geom
-  )
-  SELECT
-    gps_tbl.animal_id,
-    gps_tbl.ts,
-    ST_Distance(gps_tbl.geom, water.geom) AS distance_to_water_deg
-  FROM gps_tbl_points AS gps_tbl
-  CROSS JOIN water
-  ORDER BY distance_to_water_deg
-  LIMIT 20
-  "
-)
-
-print(distance_to_water)
-
-# This query demonstrates geofencing with ST_Buffer around the same water point.
-water_buffer_counts <- dbGetQuery(
-  con,
-  "
-  WITH water AS (
-    SELECT ST_Point(-98.7, 35.8) AS geom
-  ),
-  water_buffer AS (
-    SELECT ST_Buffer(geom, 0.08) AS geom
-    FROM water
-  )
-  SELECT
-    gps_tbl.animal_id,
-    COUNT(*) AS fixes_near_water
-  FROM gps_tbl_points AS gps_tbl
-  JOIN water_buffer
-    ON ST_Within(gps_tbl.geom, water_buffer.geom)
-  GROUP BY gps_tbl.animal_id
-  ORDER BY fixes_near_water DESC, gps_tbl.animal_id
-  "
-)
-
-print(water_buffer_counts)
+# Map 1: pasture polygons + all GPS fixes colored by pasture class.
+ggplot2::ggplot() +
+  ggplot2::geom_sf(data = pastures_sf, ggplot2::aes(fill = pastures_name), alpha = 0.18, color = "grey30") +
+  ggplot2::geom_point(
+    data = classified_points,
+    ggplot2::aes(x = lon, y = lat, color = pastures_name),
+    size = 0.9,
+    alpha = 0.45,
+    na.rm = TRUE
+  ) +
+  ggplot2::coord_sf(expand = FALSE) +
+  ggplot2::labs(
+    title = "GPS Fixes Classified by Pasture",
+    x = "Longitude",
+    y = "Latitude",
+    fill = "Pasture",
+    color = "Pasture"
+  ) +
+  ggplot2::theme_minimal(base_size = 12)
