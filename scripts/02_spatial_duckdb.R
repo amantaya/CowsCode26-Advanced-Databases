@@ -101,3 +101,48 @@ fix_counts <- dbGetQuery(
 )
 
 print(fix_counts)
+
+# This query demonstrates nearest fixes to a water point using ST_Distance.
+# Because the geometries are lon/lat, distance is reported in degree units.
+distance_to_water <- dbGetQuery(
+  con,
+  "
+  WITH water AS (
+    SELECT ST_Point(-98.7, 35.8) AS geom
+  )
+  SELECT
+    gps_tbl.animal_id,
+    gps_tbl.ts,
+    ST_Distance(gps_tbl.geom, water.geom) AS distance_to_water_deg
+  FROM gps_tbl_points AS gps_tbl
+  CROSS JOIN water
+  ORDER BY distance_to_water_deg
+  LIMIT 20
+  "
+)
+
+print(distance_to_water)
+
+# This query demonstrates geofencing with ST_Buffer around the same water point.
+water_buffer_counts <- dbGetQuery(
+  con,
+  "
+  WITH water AS (
+    SELECT ST_Point(-98.7, 35.8) AS geom
+  ),
+  water_buffer AS (
+    SELECT ST_Buffer(geom, 0.08) AS geom
+    FROM water
+  )
+  SELECT
+    gps_tbl.animal_id,
+    COUNT(*) AS fixes_near_water
+  FROM gps_tbl_points AS gps_tbl
+  JOIN water_buffer
+    ON ST_Within(gps_tbl.geom, water_buffer.geom)
+  GROUP BY gps_tbl.animal_id
+  ORDER BY fixes_near_water DESC, gps_tbl.animal_id
+  "
+)
+
+print(water_buffer_counts)
