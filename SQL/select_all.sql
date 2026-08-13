@@ -1,4 +1,4 @@
 SELECT
     *
 FROM
-    advanced.animals;
+    advanced.animals_tbl;
