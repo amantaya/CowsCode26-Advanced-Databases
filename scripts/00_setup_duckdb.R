@@ -74,8 +74,20 @@ weights_tbl$weight_kg <- pmax(350, pmin(750, weights_tbl$weight_kg))
 n_accel_tbl_events <- sample(950:1050, 1)
 accel_tbl_start <- as.POSIXct("2026-06-01 00:00:00", tz = "UTC")
 
+# Use exactly 5 animals and guarantee each has at least 100 accelerometer events.
+accel_animals <- sample(animal_ids, 5, replace = FALSE)
+base_events_per_animal <- rep(100L, length(accel_animals))
+remaining_events <- n_accel_tbl_events - sum(base_events_per_animal)
+
+extra_events <- tabulate(
+    sample(seq_along(accel_animals), remaining_events, replace = TRUE),
+    nbins = length(accel_animals)
+)
+
+accel_animal_id_values <- rep(accel_animals, times = base_events_per_animal + extra_events)
+
 accel_tbl <- data.frame(
-    animal_id = sample(animal_ids, n_accel_tbl_events, replace = TRUE),
+    animal_id = sample(accel_animal_id_values, n_accel_tbl_events, replace = FALSE),
     # Keep fractional seconds so primary keys do not collapse to the same second.
     ts = format(accel_tbl_start + seq(0, by = 0.1, length.out = n_accel_tbl_events), "%Y-%m-%d %H:%M:%OS3", tz = "UTC"),
     activity_count = pmax(0L, as.integer(round(rnorm(n_accel_tbl_events, mean = 140, sd = 45)))),
