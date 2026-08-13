@@ -73,9 +73,11 @@ weights_tbl$weight_kg <- pmax(350, pmin(750, weights_tbl$weight_kg))
 
 n_accel_tbl_events <- sample(950:1050, 1)
 accel_tbl_start <- as.POSIXct("2026-06-01 00:00:00", tz = "UTC")
+
 accel_tbl <- data.frame(
     animal_id = sample(animal_ids, n_accel_tbl_events, replace = TRUE),
-    ts = format(accel_tbl_start + seq(0, by = 30, length.out = n_accel_tbl_events), "%Y-%m-%d %H:%M:%S", tz = "UTC"),
+    # Keep fractional seconds so primary keys do not collapse to the same second.
+    ts = format(accel_tbl_start + seq(0, by = 0.1, length.out = n_accel_tbl_events), "%Y-%m-%d %H:%M:%OS3", tz = "UTC"),
     activity_count = pmax(0L, as.integer(round(rnorm(n_accel_tbl_events, mean = 140, sd = 45)))),
     stringsAsFactors = FALSE
 )
@@ -180,7 +182,7 @@ dbExecute(
         INSERT INTO accel_tbl
         SELECT
           CAST(animal_id AS VARCHAR),
-          STRPTIME(ts, '%Y-%m-%d %H:%M:%S')::TIMESTAMP,
+                    STRPTIME(ts, '%Y-%m-%d %H:%M:%S.%f')::TIMESTAMP,
           CAST(activity_count AS INTEGER)
         FROM read_csv(",
         accel_csv,
@@ -203,7 +205,7 @@ dbExecute(
                     CAST(lon AS DOUBLE)
         FROM read_csv(",
         gps_csv,
-                ", columns = {'fix_id': 'BIGINT', 'animal_id': 'VARCHAR', 'ts': 'VARCHAR', 'speed_m_s': 'DOUBLE', 'lat': 'DOUBLE', 'lon': 'DOUBLE'}, header = TRUE)
+        ", columns = {'fix_id': 'BIGINT', 'animal_id': 'VARCHAR', 'ts': 'VARCHAR', 'speed_m_s': 'DOUBLE', 'lat': 'DOUBLE', 'lon': 'DOUBLE'}, header = TRUE)
         "
     )
 )
