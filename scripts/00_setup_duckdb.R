@@ -25,6 +25,7 @@ if (!dir.exists(csv_dir)) {
 animals_csv <- file.path(csv_dir, "animals.csv")
 gps_fixes_csv <- file.path(csv_dir, "gps_fixes.csv")
 weights_csv <- file.path(csv_dir, "weights.csv")
+accel_events_csv <- file.path(csv_dir, "accel_events.csv")
 
 set.seed(123)
 
@@ -70,13 +71,29 @@ weights <- data.frame(
 
 weights$weight_kg <- pmax(350, pmin(750, weights$weight_kg))
 
+# TODO: generate ~1000 rows
+accel <- data.frame(
+    animal_id = c("A0001", "A0001", "A0001", "A0002", "A0002"),
+    ts = c(
+        "2026-06-01 06:00:00",
+        "2026-06-01 06:05:00",
+        "2026-06-01 06:30:00",
+        "2026-06-01 06:02:00",
+        "2026-06-01 06:07:00"
+    ),
+    activity_count = c(120, 140, 95, 180, 165),
+    stringsAsFactors = FALSE
+)
+
 write.csv(animals, animals_csv, row.names = FALSE)
 write.csv(gps_fixes, gps_fixes_csv, row.names = FALSE)
 write.csv(weights, weights_csv, row.names = FALSE)
+write.csv(accel, accel_events_csv, row.names = FALSE)
 
 con <- dbConnect(duckdb(), dbdir = dbdir)
 
 # Recreate tables with explicit types and relational constraints.
+dbExecute(con, "DROP TABLE IF EXISTS accel_events")
 dbExecute(con, "DROP TABLE IF EXISTS weights")
 dbExecute(con, "DROP TABLE IF EXISTS gps_fixes")
 dbExecute(con, "DROP TABLE IF EXISTS animals")
@@ -123,11 +140,28 @@ dbExecute(
     "
 )
 
+dbExecute(
+    con,
+    "
+    CREATE TABLE accel_events (
+      animal_id VARCHAR NOT NULL,
+      ts TIMESTAMP NOT NULL,
+      activity_count INTEGER NOT NULL,
+      PRIMARY KEY (animal_id, ts),
+      CONSTRAINT fk_accel_animal
+        FOREIGN KEY (animal_id)
+        REFERENCES animals(animal_id)
+    )
+    "
+)
+
 animals_csv_sql <- as.character(dbQuoteString(con, normalizePath(animals_csv, winslash = "/", mustWork = TRUE)))
 
 gps_fixes_csv_sql <- as.character(dbQuoteString(con, normalizePath(gps_fixes_csv, winslash = "/", mustWork = TRUE)))
 
 weights_csv_sql <- as.character(dbQuoteString(con, normalizePath(weights_csv, winslash = "/", mustWork = TRUE)))
+
+accel_events_csv_sql <- as.character(dbQuoteString(con, normalizePath(accel_events_csv, winslash = "/", mustWork = TRUE)))
 
 dbExecute(
     con,
@@ -140,6 +174,22 @@ dbExecute(
         FROM read_csv(",
         animals_csv_sql,
         ", columns = {'animal_id': 'VARCHAR', 'treatment_group': 'VARCHAR'}, header = TRUE)
+        "
+    )
+)
+
+dbExecute(
+    con,
+    paste0(
+        "
+        INSERT INTO accel_events
+        SELECT
+          CAST(animal_id AS VARCHAR),
+          STRPTIME(ts, '%Y-%m-%d %H:%M:%S')::TIMESTAMP,
+          CAST(activity_count AS INTEGER)
+        FROM read_csv(",
+        accel_events_csv_sql,
+        ", columns = {'animal_id': 'VARCHAR', 'ts': 'VARCHAR', 'activity_count': 'INTEGER'}, header = TRUE)
         "
     )
 )
@@ -183,6 +233,6 @@ cat("Setup complete. CSV files written to:", csv_dir, "\n")
 
 cat("DuckDB database initialized at:", dbdir, "\n")
 
-cat("Rows generated - animals:", n_animals, "gps_fixes:", n_gps_fixes, "weights:", n_weights, "\n")
+cat("Rows generated - animals:", n_animals, "gps_fixes:", n_gps_fixes, "weights:", n_weights, "accel_events:", nrow(accel_events), "\n")
 
 dbDisconnect(con, shutdown = TRUE)
