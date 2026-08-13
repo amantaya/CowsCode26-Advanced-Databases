@@ -29,8 +29,8 @@ if (inherits(install_result, "try-error") || !dbIsValid(con)) {
 }
 dbExecute(con, "LOAD spatial")
 
-paddocks <- data.frame(
-  paddock_name = c("North", "South"),
+pastures <- data.frame(
+  pastures_name = c("North", "South"),
   wkt = c(
     "POLYGON ((-103.0 35.3, -103.0 37.0, -94.4 37.0, -94.4 35.3, -103.0 35.3))",
     "POLYGON ((-103.0 33.6, -103.0 35.3, -94.4 35.3, -94.4 33.6, -103.0 33.6))"
@@ -42,30 +42,17 @@ if (!dbExistsTable(con, "gps_fixes")) {
   stop("Missing required table in DuckDB: gps_fixes. Run scripts/00_setup_duckdb.R first.", call. = FALSE)
 }
 
-dbWriteTable(con, "paddocks_raw", paddocks, overwrite = TRUE)
-
-dbExecute(
-  con,
-  "
-  CREATE OR REPLACE TABLE gps_points_raw AS
-  SELECT
-    animal_id,
-    ts,
-    lon AS longitude,
-    lat AS latitude
-  FROM gps_fixes
-  "
-)
+dbWriteTable(con, "pastures", pastures, overwrite = TRUE)
 
 
 dbExecute(
   con,
   "
-  CREATE OR REPLACE TABLE paddocks AS
+  CREATE OR REPLACE TABLE pastures AS
   SELECT
-    paddock_name,
+    pastures_name,
     ST_GeomFromText(wkt) AS geom
-  FROM paddocks_raw
+  FROM pastures
   "
 )
 
@@ -77,7 +64,7 @@ dbExecute(
     animal_id,
     ts,
     ST_Point(longitude, latitude) AS geom
-  FROM gps_points_raw
+  FROM gps_fixes
   "
 )
 
@@ -87,10 +74,10 @@ classified_points <- dbGetQuery(
   SELECT
     gps.animal_id,
     gps.ts,
-    paddocks.paddock_name
+    pastures.pastures_name
   FROM gps_points AS gps
-  JOIN paddocks
-    ON ST_Within(gps.geom, paddocks.geom)
+  JOIN pastures
+    ON ST_Within(gps.geom, pastures.geom)
   ORDER BY gps.ts
   "
 )
@@ -99,13 +86,13 @@ fix_counts <- dbGetQuery(
   con,
   "
   SELECT
-    paddocks.paddock_name,
-    COUNT(*) AS fixes_in_paddock
+    pastures.pastures_name,
+    COUNT(*) AS fixes_in_pastures
   FROM gps_points AS gps
-  JOIN paddocks
-    ON ST_Within(gps.geom, paddocks.geom)
-  GROUP BY paddocks.paddock_name
-  ORDER BY paddocks.paddock_name
+  JOIN pastures
+    ON ST_Within(gps.geom, pastures.geom)
+  GROUP BY pastures.pastures_name
+  ORDER BY pastures.pastures_name
   "
 )
 
