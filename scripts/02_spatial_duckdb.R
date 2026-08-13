@@ -14,7 +14,10 @@ if (length(missing_packages) > 0) {
 library(DBI)
 library(duckdb)
 
-con <- dbConnect(duckdb(), dbdir = ":memory:")
+dbdir <- here::here("data", "databases.duckdb")
+
+con <- dbConnect(duckdb(), dbdir = dbdir)
+
 on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
 install_result <- try(dbExecute(con, "INSTALL spatial"), silent = TRUE)
@@ -22,10 +25,11 @@ if (inherits(install_result, "try-error") || !dbIsValid(con)) {
   if (dbIsValid(con)) {
     dbDisconnect(con, shutdown = TRUE)
   }
-  con <- dbConnect(duckdb(), dbdir = ":memory:")
+  con <- dbConnect(duckdb(), dbdir = dbdir)
 }
 dbExecute(con, "LOAD spatial")
 
+# TODO: load into duckdb as SPATIAL tables
 paddocks <- data.frame(
   paddock_name = c("North", "South"),
   wkt = c(
@@ -35,23 +39,10 @@ paddocks <- data.frame(
   stringsAsFactors = FALSE
 )
 
-gps_points <- data.frame(
-  animal_id = c("A01", "A01", "A02", "A03"),
-  ts = as.POSIXct(
-    c(
-      "2026-06-01 06:00:00",
-      "2026-06-01 06:05:00",
-      "2026-06-01 06:10:00",
-      "2026-06-01 06:15:00"
-    ),
-    tz = "UTC"
-  ),
-  longitude = c(2, 4, 7, 8),
-  latitude = c(2, -4, 3, -6)
-)
+# TODO: load gps_fixes from duckdb table
 
 dbWriteTable(con, "paddocks_raw", paddocks, overwrite = TRUE)
-dbWriteTable(con, "gps_points_raw", gps_points, overwrite = TRUE)
+
 
 dbExecute(
   con,
