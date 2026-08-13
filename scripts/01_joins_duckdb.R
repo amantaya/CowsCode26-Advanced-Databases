@@ -27,94 +27,21 @@ ensure_duckdb_connection <- function(con) {
     dbConnect(duckdb(), dbdir = dbdir)
 }
 
-animals <- data.frame(
-    animal_id = c("A01", "A02", "A03"),
-    treatment_group = c("control", "supplement", "control"),
-    stringsAsFactors = FALSE
-)
-
-gps_fixes <- data.frame(
-    animal_id = c("A01", "A01", "A02", "A03", "A03"),
-    ts = as.POSIXct(
-        c(
-            "2026-06-01 06:00:00",
-            "2026-06-01 12:00:00",
-            "2026-06-01 06:05:00",
-            "2026-06-01 06:10:00",
-            "2026-06-01 12:10:00"
-        ),
-        tz = "UTC"
-    ),
-    speed_m_s = c(0.8, 1.1, 0.5, 0.7, 1.4)
-)
-
-  weights <- data.frame(
-    animal_id = c("A01", "A01", "A02", "A03"),
-    ts = as.POSIXct(
-      c(
-        "2026-06-01 05:50:00",
-        "2026-06-01 11:50:00",
-        "2026-06-01 05:55:00",
-        "2026-06-01 06:00:00"
-      ),
-      tz = "UTC"
-    ),
-    weight_kg = c(542.2, 543.0, 498.5, 561.8)
-  )
-
 con <- ensure_duckdb_connection(con)
 
-  # Recreate tables with relational constraints for ERD visualization.
-  dbExecute(con, "DROP TABLE IF EXISTS weights")
-  dbExecute(con, "DROP TABLE IF EXISTS gps_fixes")
-  dbExecute(con, "DROP TABLE IF EXISTS animals")
+required_tables <- c("animals", "gps_fixes", "weights")
+missing_tables <- required_tables[!vapply(required_tables, dbExistsTable, logical(1), conn = con)]
 
-  dbExecute(
-    con,
-    "
-    CREATE TABLE animals (
-      animal_id VARCHAR PRIMARY KEY,
-      treatment_group VARCHAR NOT NULL
+if (length(missing_tables) > 0) {
+    stop(
+        paste(
+            "Missing required tables in DuckDB:",
+            paste(missing_tables, collapse = ", "),
+            "- run scripts/00_setup_duckdb.R first."
+        ),
+        call. = FALSE
     )
-    "
-  )
-
-  dbExecute(
-    con,
-    "
-    CREATE TABLE gps_fixes (
-      fix_id BIGINT PRIMARY KEY,
-      animal_id VARCHAR NOT NULL,
-      ts TIMESTAMP NOT NULL,
-      speed_m_s DOUBLE NOT NULL,
-      CONSTRAINT fk_gps_animal
-        FOREIGN KEY (animal_id)
-        REFERENCES animals(animal_id)
-    )
-    "
-  )
-
-  dbExecute(
-    con,
-    "
-    CREATE TABLE weights (
-      animal_id VARCHAR NOT NULL,
-      ts TIMESTAMP NOT NULL,
-      weight_kg DOUBLE NOT NULL,
-      PRIMARY KEY (animal_id, ts),
-      CONSTRAINT fk_weights_animal
-        FOREIGN KEY (animal_id)
-        REFERENCES animals(animal_id)
-    )
-    "
-  )
-
-  gps_fixes$fix_id <- seq_len(nrow(gps_fixes))
-  gps_fixes <- gps_fixes[, c("fix_id", "animal_id", "ts", "speed_m_s")]
-
-  dbAppendTable(con, "animals", animals)
-  dbAppendTable(con, "gps_fixes", gps_fixes)
-  dbAppendTable(con, "weights", weights)
+}
 
 joined <- dbGetQuery(
     con,
