@@ -44,7 +44,6 @@ if (!dbExistsTable(con, "gps_tbl")) {
 
 dbWriteTable(con, "pastures", pastures, overwrite = TRUE)
 
-
 dbExecute(
   con,
   "
@@ -68,6 +67,8 @@ dbExecute(
   "
 )
 
+# This query demonstrates how to perform a spatial intersect using the ST_Within function.
+# It returns all GPS fixes that fall within the defined pastures.
 classified_points <- dbGetQuery(
   con,
   "
@@ -82,6 +83,9 @@ classified_points <- dbGetQuery(
   "
 )
 
+print(classified_points)
+
+# This query demonstrates a summary function that counts the number of GPS fixes within each pasture.
 fix_counts <- dbGetQuery(
   con,
   "
@@ -96,5 +100,4 @@ fix_counts <- dbGetQuery(
   "
 )
 
-print(classified_points)
 print(fix_counts)
