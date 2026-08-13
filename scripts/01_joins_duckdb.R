@@ -13,6 +13,7 @@ if (length(missing_packages) > 0) {
 
 library(DBI)
 library(duckdb)
+library(dplyr)
 
 dbdir <- here::here("data", "advanced.duckdb")
 
@@ -44,7 +45,7 @@ if (length(missing_tables) > 0) {
 }
 
 # Left join of weights_tbl and animals_tbl
-dbGetQuery(
+left_join <- dbGetQuery(
     con,
     "
   SELECT
@@ -57,8 +58,12 @@ dbGetQuery(
   "
 )
 
+dplyr::glimpse(left_join)
+
+View(left_join)
+
 # Right join of weights_tbl and animals_tbl
-dbGetQuery(
+right_join <- dbGetQuery(
     con,
     "
   SELECT
@@ -71,8 +76,10 @@ dbGetQuery(
   "
 )
 
+dplyr::glimpse(right_join)
+
 # Inner join of weights_tbl and animals_tbl
-dbGetQuery(
+inner_join <- dbGetQuery(
     con,
     "
   SELECT
@@ -85,8 +92,10 @@ dbGetQuery(
   "
 )
 
+dplyr::glimpse(inner_join)
+
 # Full join of weights_tbl and animals_tbl
-dbGetQuery(
+full_join <- dbGetQuery(
     con,
     "
   SELECT
@@ -99,20 +108,7 @@ dbGetQuery(
   "
 )
 
-# Anti join of weights_tbl and animals_tbl
-dbGetQuery(
-    con,
-    "
-  SELECT
-    w.animal_id,
-    w.weight_kg,
-    NULL AS treatment_group
-  FROM weights_tbl AS w
-  ANTI JOIN animals_tbl
-    ON w.animal_id = animals_tbl.animal_id
-  "
-)
-
+dplyr::glimpse(full_join)
 
 # Complex join of gps_tbl, animals_tbl, and weights_tbl using left joins
 
