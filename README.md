@@ -1,7 +1,4 @@
 # Advanced Databases Workshop
-
-Reveal.js slides for a 1-hour workshop on advanced databases for precision livestock research, with an emphasis on GPS and accelerometer wearables.
-
 ## Live slides
 
 The slides for this workshop are available at:
