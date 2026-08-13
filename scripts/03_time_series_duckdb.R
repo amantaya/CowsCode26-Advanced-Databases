@@ -37,21 +37,29 @@ if (!dbExistsTable(con, "accel_tbl")) {
   )
 }
 
-# change to a 5 second epoch aggregation
-with_gaps <- dbGetQuery(
+# 5 second epoch aggregation
+epoch_5s <- dbGetQuery(
   con,
   "
-  SELECT
-    animal_id,
-    ts,
-    activity_count,
-    LAG(ts) OVER (PARTITION BY animal_id ORDER BY ts) AS previous_ts,
-    epoch(ts) - epoch(LAG(ts) OVER (PARTITION BY animal_id ORDER BY ts)) AS gap_seconds
-  FROM accel_tbl
-  ORDER BY animal_id, ts
+SELECT
+  animal_id,
+  time_bucket(INTERVAL '5 seconds', ts) AS epoch_5s,
+  COUNT(*) AS readings_in_window,
+  SUM(activity_count) AS activity_sum,
+  AVG(activity_count) AS activity_avg
+FROM accel_tbl
+GROUP BY
+  animal_id,
+  time_bucket(INTERVAL '5 seconds', ts)
+ORDER BY
+  animal_id,
+  epoch_5s;
   "
 )
 
+View(epoch_5s)
+
+# Common time series queries for the first week of data
 week_of_data <- dbGetQuery(
   con,
   "
@@ -66,21 +74,4 @@ week_of_data <- dbGetQuery(
   "
 )
 
-hourly_summary <- dbGetQuery(
-  con,
-  "
-  SELECT
-    animal_id,
-    date_trunc('hour', ts) AS hour_start,
-    COUNT(*) AS n_windows,
-    AVG(activity_count) AS mean_activity_count,
-    SUM(activity_count) AS total_activity_count
-  FROM accel_tbl
-  GROUP BY animal_id, hour_start
-  ORDER BY animal_id, hour_start
-  "
-)
-
-print(with_gaps)
 print(week_of_data)
-print(hourly_summary)
