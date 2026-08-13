@@ -1,4 +1,4 @@
-required_packages <- c("DBI", "duckdb")
+required_packages <- c("DBI", "duckdb", "here")
 missing_packages <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
 
 if (length(missing_packages) > 0) {
@@ -14,7 +14,7 @@ if (length(missing_packages) > 0) {
 library(DBI)
 library(duckdb)
 
-dbdir <- here::here("data", "databases.duckdb")
+dbdir <- here::here("data", "advanced.duckdb")
 
 con <- dbConnect(duckdb(), dbdir = dbdir)
 
@@ -29,19 +29,33 @@ if (inherits(install_result, "try-error") || !dbIsValid(con)) {
 }
 dbExecute(con, "LOAD spatial")
 
-# TODO: load into duckdb as SPATIAL tables
 paddocks <- data.frame(
   paddock_name = c("North", "South"),
   wkt = c(
-    "POLYGON ((0 0, 0 10, 10 10, 10 0, 0 0))",
-    "POLYGON ((0 -10, 0 0, 10 0, 10 -10, 0 -10))"
+    "POLYGON ((-103.0 35.3, -103.0 37.0, -94.4 37.0, -94.4 35.3, -103.0 35.3))",
+    "POLYGON ((-103.0 33.6, -103.0 35.3, -94.4 35.3, -94.4 33.6, -103.0 33.6))"
   ),
   stringsAsFactors = FALSE
 )
 
-# TODO: load gps_fixes from duckdb table
+if (!dbExistsTable(con, "gps_fixes")) {
+  stop("Missing required table in DuckDB: gps_fixes. Run scripts/00_setup_duckdb.R first.", call. = FALSE)
+}
 
 dbWriteTable(con, "paddocks_raw", paddocks, overwrite = TRUE)
+
+dbExecute(
+  con,
+  "
+  CREATE OR REPLACE TABLE gps_points_raw AS
+  SELECT
+    animal_id,
+    ts,
+    lon AS longitude,
+    lat AS latitude
+  FROM gps_fixes
+  "
+)
 
 
 dbExecute(
