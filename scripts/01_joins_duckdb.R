@@ -43,6 +43,79 @@ if (length(missing_tables) > 0) {
     )
 }
 
+# Left join of weights and animals
+dbGetQuery(
+    con,
+    "
+  SELECT
+    w.animal_id,
+    w.weight_kg,
+    animals.treatment_group
+  FROM weights AS w
+  LEFT JOIN animals
+    ON w.animal_id = animals.animal_id
+  "
+)
+
+# Right join of weights and animals
+dbGetQuery(
+    con,
+    "
+  SELECT
+    w.animal_id,
+    w.weight_kg,
+    animals.treatment_group
+  FROM weights AS w
+  RIGHT JOIN animals
+    ON w.animal_id = animals.animal_id
+  "
+)
+
+# Inner join of weights and animals
+dbGetQuery(
+    con,
+    "
+  SELECT
+    w.animal_id,
+    w.weight_kg,
+    animals.treatment_group
+  FROM weights AS w
+  INNER JOIN animals
+    ON w.animal_id = animals.animal_id
+  "
+)
+
+# Full join of weights and animals
+dbGetQuery(
+    con,
+    "
+  SELECT
+    w.animal_id,
+    w.weight_kg,
+    animals.treatment_group
+  FROM weights AS w
+  FULL JOIN animals
+    ON w.animal_id = animals.animal_id
+  "
+)
+
+# Anti join of weights and animals
+dbGetQuery(
+    con,
+    "
+  SELECT
+    w.animal_id,
+    w.weight_kg,
+    animals.treatment_group
+  FROM weights AS w
+  ANTI JOIN animals
+    ON w.animal_id = animals.animal_id
+  "
+)
+
+
+# Complex join of gps_fixes, animals, and weights using left joins
+
 joined <- dbGetQuery(
     con,
     "
@@ -63,4 +136,14 @@ joined <- dbGetQuery(
 
 print(joined)
 
-# Demo on viewing the Entity Relationship Diagram in DBeaver
+# TODO: using SQL, how many rows are in the joined table?
+
+# Using SQL, How many rows are in each of the source tables?
+
+# How many rows are in the joined table that have no matching animal_id in the animals table?
+
+# How many rows are in the joined table that have no matching animal_id in the weights table?
+
+
+
+
