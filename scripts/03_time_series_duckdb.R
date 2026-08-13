@@ -1,4 +1,4 @@
-required_packages <- c("DBI", "duckdb")
+required_packages <- c("DBI", "duckdb", "here")
 missing_packages <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
 
 if (length(missing_packages) > 0) {
@@ -14,7 +14,9 @@ if (length(missing_packages) > 0) {
 library(DBI)
 library(duckdb)
 
-con <- dbConnect(duckdb(), dbdir = ":memory:")
+dbdir <- here::here("data", "advanced.duckdb")
+
+con <- dbConnect(duckdb(), dbdir = dbdir)
 on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 
 ensure_duckdb_connection <- function(con) {
@@ -23,27 +25,19 @@ ensure_duckdb_connection <- function(con) {
     return(con)
   }
 
-  dbConnect(duckdb(), dbdir = ":memory:")
+  dbConnect(duckdb(), dbdir = dbdir)
 }
 
-accel_events <- data.frame(
-  animal_id = c("A01", "A01", "A01", "A02", "A02"),
-  ts = as.POSIXct(
-    c(
-      "2026-06-01 06:00:00",
-      "2026-06-01 06:05:00",
-      "2026-06-01 06:30:00",
-      "2026-06-01 06:02:00",
-      "2026-06-01 06:07:00"
-    ),
-    tz = "UTC"
-  ),
-  activity_count = c(120, 140, 95, 180, 165)
-)
-
 con <- ensure_duckdb_connection(con)
-dbWriteTable(con, "accel_events", accel_events)
 
+if (!dbExistsTable(con, "accel")) {
+  stop(
+    "Missing required table in DuckDB: accel. Run scripts/00_setup_duckdb.R first.",
+    call. = FALSE
+  )
+}
+
+# change to a 5 second epoch aggregation
 with_gaps <- dbGetQuery(
   con,
   "
@@ -53,7 +47,7 @@ with_gaps <- dbGetQuery(
     activity_count,
     LAG(ts) OVER (PARTITION BY animal_id ORDER BY ts) AS previous_ts,
     epoch(ts) - epoch(LAG(ts) OVER (PARTITION BY animal_id ORDER BY ts)) AS gap_seconds
-  FROM accel_events
+  FROM accel
   ORDER BY animal_id, ts
   "
 )
@@ -65,7 +59,7 @@ week_of_data <- dbGetQuery(
     animal_id,
     ts,
     activity_count
-  FROM accel_events
+  FROM accel
   WHERE ts >= TIMESTAMP '2026-06-01 00:00:00'
     AND ts < TIMESTAMP '2026-06-08 00:00:00'
   ORDER BY animal_id, ts
@@ -81,7 +75,7 @@ hourly_summary <- dbGetQuery(
     COUNT(*) AS n_windows,
     AVG(activity_count) AS mean_activity_count,
     SUM(activity_count) AS total_activity_count
-  FROM accel_events
+  FROM accel
   GROUP BY animal_id, hour_start
   ORDER BY animal_id, hour_start
   "
