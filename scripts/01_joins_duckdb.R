@@ -29,7 +29,7 @@ ensure_duckdb_connection <- function(con) {
 
 con <- ensure_duckdb_connection(con)
 
-required_tables <- c("animals", "gps_fixes", "weights")
+required_tables <- c("animals_tbl", "gps_tbl", "weights_tbl")
 missing_tables <- required_tables[!vapply(required_tables, dbExistsTable, logical(1), conn = con)]
 
 if (length(missing_tables) > 0) {
@@ -43,63 +43,63 @@ if (length(missing_tables) > 0) {
     )
 }
 
-# Left join of weights and animals
+# Left join of weights_tbl and animals_tbl
 dbGetQuery(
     con,
     "
   SELECT
     w.animal_id,
     w.weight_kg,
-    animals.treatment_group
-  FROM weights AS w
-  LEFT JOIN animals
-    ON w.animal_id = animals.animal_id
+    animals_tbl.treatment_group
+  FROM weights_tbl AS w
+  LEFT JOIN animals_tbl
+    ON w.animal_id = animals_tbl.animal_id
   "
 )
 
-# Right join of weights and animals
+# Right join of weights_tbl and animals_tbl
 dbGetQuery(
     con,
     "
   SELECT
     w.animal_id,
     w.weight_kg,
-    animals.treatment_group
-  FROM weights AS w
-  RIGHT JOIN animals
-    ON w.animal_id = animals.animal_id
+    animals_tbl.treatment_group
+  FROM weights_tbl AS w
+  RIGHT JOIN animals_tbl
+    ON w.animal_id = animals_tbl.animal_id
   "
 )
 
-# Inner join of weights and animals
+# Inner join of weights_tbl and animals_tbl
 dbGetQuery(
     con,
     "
   SELECT
     w.animal_id,
     w.weight_kg,
-    animals.treatment_group
-  FROM weights AS w
-  INNER JOIN animals
-    ON w.animal_id = animals.animal_id
+    animals_tbl.treatment_group
+  FROM weights_tbl AS w
+  INNER JOIN animals_tbl
+    ON w.animal_id = animals_tbl.animal_id
   "
 )
 
-# Full join of weights and animals
+# Full join of weights_tbl and animals_tbl
 dbGetQuery(
     con,
     "
   SELECT
     w.animal_id,
     w.weight_kg,
-    animals.treatment_group
-  FROM weights AS w
-  FULL JOIN animals
-    ON w.animal_id = animals.animal_id
+    animals_tbl.treatment_group
+  FROM weights_tbl AS w
+  FULL JOIN animals_tbl
+    ON w.animal_id = animals_tbl.animal_id
   "
 )
 
-# Anti join of weights and animals
+# Anti join of weights_tbl and animals_tbl
 dbGetQuery(
     con,
     "
@@ -107,32 +107,32 @@ dbGetQuery(
     w.animal_id,
     w.weight_kg,
     NULL AS treatment_group
-  FROM weights AS w
-  ANTI JOIN animals
-    ON w.animal_id = animals.animal_id
+  FROM weights_tbl AS w
+  ANTI JOIN animals_tbl
+    ON w.animal_id = animals_tbl.animal_id
   "
 )
 
 
-# Complex join of gps_fixes, animals, and weights using left joins
+# Complex join of gps_tbl, animals_tbl, and weights_tbl using left joins
 
 complex_join_sql <- "
   SELECT
-    gps.animal_id,
-    gps.ts,
-    animals.treatment_group,
-    gps.speed_m_s,
+    gps_tbl.animal_id,
+    gps_tbl.ts,
+    animals_tbl.treatment_group,
+    gps_tbl.speed_m_s,
     w.weight_kg
-  FROM gps_fixes AS gps
-  LEFT JOIN animals
-    ON gps.animal_id = animals.animal_id
-  LEFT JOIN weights AS w
-    ON gps.animal_id = w.animal_id
+  FROM gps_tbl AS gps_tbl
+  LEFT JOIN animals_tbl
+    ON gps_tbl.animal_id = animals_tbl.animal_id
+  LEFT JOIN weights_tbl AS w
+    ON gps_tbl.animal_id = w.animal_id
 "
 
 joined <- dbGetQuery(
     con,
-    paste0(complex_join_sql, "\nORDER BY gps.animal_id, gps.ts")
+    paste0(complex_join_sql, "\nORDER BY gps_tbl.animal_id, gps_tbl.ts")
 )
 
 print(joined)
@@ -156,24 +156,24 @@ print(joined_row_count)
 source_row_counts <- dbGetQuery(
     con,
     "
-    SELECT 'animals' AS table_name, COUNT(*) AS row_count FROM animals
+    SELECT 'animals_tbl' AS table_name, COUNT(*) AS row_count FROM animals_tbl
     UNION ALL
-    SELECT 'gps_fixes' AS table_name, COUNT(*) AS row_count FROM gps_fixes
+    SELECT 'gps_tbl' AS table_name, COUNT(*) AS row_count FROM gps_tbl
     UNION ALL
-    SELECT 'weights' AS table_name, COUNT(*) AS row_count FROM weights
+    SELECT 'weights_tbl' AS table_name, COUNT(*) AS row_count FROM weights_tbl
     ORDER BY table_name
     "
 )
 
 print(source_row_counts)
 
-# How many rows are in the joined table that have no matching animal_id in the animals table?
+# How many rows are in the joined table that have no matching animal_id in the animals_tbl table?
 
-rows_missing_animals <- dbGetQuery(
+rows_missing_animals_tbl <- dbGetQuery(
     con,
     paste0(
         "
-        SELECT COUNT(*) AS rows_missing_animals
+        SELECT COUNT(*) AS rows_missing_animals_tbl
         FROM (",
         complex_join_sql,
         ") AS joined
@@ -182,15 +182,15 @@ rows_missing_animals <- dbGetQuery(
     )
 )
 
-print(rows_missing_animals)
+print(rows_missing_animals_tbl)
 
-# How many rows are in the joined table that have no matching animal_id in the weights table?
+# How many rows are in the joined table that have no matching animal_id in the weights_tbl table?
 
-rows_missing_weights <- dbGetQuery(
+rows_missing_weights_tbl <- dbGetQuery(
     con,
     paste0(
         "
-        SELECT COUNT(*) AS rows_missing_weights
+        SELECT COUNT(*) AS rows_missing_weights_tbl
         FROM (",
         complex_join_sql,
         ") AS joined
@@ -199,7 +199,7 @@ rows_missing_weights <- dbGetQuery(
     )
 )
 
-print(rows_missing_weights)
+print(rows_missing_weights_tbl)
 
 
 
