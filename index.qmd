@@ -14,54 +14,46 @@ format:
     output-file: index.html
 ---
 
-## Why this workshop?
+## Why This Workshop?
 
-Early-career faculty and graduate researchers in precision livestock technology often face the same pattern:
+Researchers in precision livestock technology often face the same pattern:
 
-- wearable data are large, messy, and joined across many sources
-- geospatial workflows need more than spreadsheets and ad hoc scripts
-- the best database and analytical process choice depends on the research question
+- Wearable data are large, messy, and joined across many sources
+- Geospatial workflows need more than spreadsheets and ad hoc scripts
+- The best database and analytical process choice depends on the research question
 
 ## What We Will Cover
 
-- why databases help with wearable research workflows
-- relational joins for combining sensor and metadata tables
-- spatial analysis patterns for GPS data
-- time-series queries for accelerometer and event streams
-- example R scripts using `DBI` with `duckdb`
+- Quick refresh of SQL and R basics
+- Relational joins for combining sensor and metadata tables
+- Spatial analysis patterns for GPS data
+- Time-series queries for accelerometer and event streams
+- Example R scripts using `DBI` with `duckdb`
 
 ## One-Hour Agenda
 
 | Time | Segment |
-|---|---|
+| --- | --- |
 | 0:00-0:10 | Shared foundation: why use a database for livestock research? |
-| 0:10-0:25 | Topic 1: joins |
-| 0:25-0:40 | Topic 2: spatial analysis |
-| 0:40-0:55 | Topic 3: time series |
+| 0:10-0:25 | Topic 1: Joins |
+| 0:25-0:40 | Topic 2: Spatial Analysis |
+| 0:40-0:55 | Topic 3: Time Series |
 | 0:55-1:00 | Wrap-up and next steps |
 
-## Typical research data stack
+## Typical Research Data Stack
 
-- device streams: GPS fixes, accelerometer bursts, derived activity scores
-- context tables: animal metadata, treatment groups, pasture assignments
-- environmental layers: weather, vegetation, water points, paddock boundaries
-- outputs: summaries, movement metrics, maps, figures, reproducible tables
+- Device Streams: GPS fixes, accelerometer bursts, derived activity scores
+- Context Tables: animal metadata, treatment groups, pasture assignments
+- Environmental Layers: weather, vegetation, water points, paddock boundaries
+- Outputs: summaries, movement metrics, maps, figures, reproducible tables
 
-## What Breaks First
-
-- Millions of rows per deployment
-- Repeated joins on timestamp and animal ID
-- Geospatial operations done outside the analysis pipeline
-- Multiple file formats with inconsistent metadata
-- No clear separation between raw, cleaned, and derived data
-
-## Why DuckDB plus DBI in R?
+## Why DuckDB Plus DBI in R?
 
 - DuckDB gives you fast local analytics without running a database server.
 - `DBI` gives you a standard R interface for queries, tables, and results.
 - This combination works well for teaching because the same ideas transfer to PostgreSQL later.
 
-## Core R pattern
+## Core R Pattern
 
 ```r
 library(DBI)
@@ -71,6 +63,10 @@ con <- dbConnect(duckdb(), dbdir = ":memory:")
 on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 ```
 
+# [Optional] Setup
+
+Downloading the repository from GitHub will install the example tables in a local `.duckdb` file. You can also create your own database from CSV files by running the  `00_setup_duckdb.R` with example tables for animals, GPS fixes, and weights.
+
 ## How to View `.duckdb` Files
 
 - DBeaver is a free GUI for DuckDB and supports 100+ other database engines
@@ -78,6 +74,8 @@ on.exit(dbDisconnect(con, shutdown = TRUE), add = TRUE)
 ![](docs/images/dbeaver.png)^[https://dbeaver.io/]
 
 ## Live DBeaver Demo
+
+We will demonstrate how to open the `.duckdb` file in DBeaver, run queries, and visualize results.
 
 _switch to live demo_
 
@@ -111,6 +109,8 @@ Why joins matter in wearable studies
 ![](docs/images/full-outer-join.png)^[https://blog.codinghorror.com/a-visual-explanation-of-sql-joins/]
 
 ## Join SQL Example
+
+# TODO: update SQL query
 
 ```sql
 SELECT
@@ -147,7 +147,7 @@ Why spatial analysis belongs in the database
 - Which animals crossed a virtual fence line?
 - How do movement metrics differ by pasture?
 
-## Spatial example with DuckDB
+## Spatial Example with DuckDB
 
 ```sql
 INSTALL spatial;
@@ -185,7 +185,7 @@ Why time-series structure matters
 - when did the collar stop transmitting?
 - how active was each animal by hour or day?
 - where are the large gaps or bursts in the sensor stream?
-- how do we summarize high-frequency observations without losing provenance?
+- how do we summarize high-frequency observations (accelerometers) without losing provenance?
 
 ## Time-Series Example
 
