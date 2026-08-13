@@ -1,6 +1,6 @@
 SELECT
     *
 FROM
-    advanced.animals
+    advanced.animals_tbl
 WHERE
     treatment_group = 'pasture';
