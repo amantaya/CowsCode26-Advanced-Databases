@@ -14,7 +14,7 @@ if (length(missing_packages) > 0) {
 library(DBI)
 library(duckdb)
 
-dbdir <- here::here("data", "advanced-databases.duckdb")
+dbdir <- here::here("data", "advanced.duckdb")
 
 csv_dir <- here::here("data")
 
