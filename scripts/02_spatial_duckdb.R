@@ -62,7 +62,7 @@ dbExecute(
   SELECT
     animal_id,
     ts,
-    ST_Point(longitude, latitude) AS geom
+    ST_Point(lon, lat) AS geom
   FROM gps_tbl
   "
 )
@@ -83,7 +83,7 @@ classified_points <- dbGetQuery(
   "
 )
 
-print(classified_points)
+View(classified_points)
 
 # This query demonstrates a summary function that counts the number of GPS fixes within each pasture.
 fix_counts <- dbGetQuery(
