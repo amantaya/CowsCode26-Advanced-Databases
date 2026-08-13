@@ -106,7 +106,7 @@ dbGetQuery(
   SELECT
     w.animal_id,
     w.weight_kg,
-    animals.treatment_group
+    NULL AS treatment_group
   FROM weights AS w
   ANTI JOIN animals
     ON w.animal_id = animals.animal_id
@@ -116,9 +116,7 @@ dbGetQuery(
 
 # Complex join of gps_fixes, animals, and weights using left joins
 
-joined <- dbGetQuery(
-    con,
-    "
+complex_join_sql <- "
   SELECT
     gps.animal_id,
     gps.ts,
@@ -130,19 +128,78 @@ joined <- dbGetQuery(
     ON gps.animal_id = animals.animal_id
   LEFT JOIN weights AS w
     ON gps.animal_id = w.animal_id
-  ORDER BY gps.animal_id, gps.ts
-  "
+"
+
+joined <- dbGetQuery(
+    con,
+    paste0(complex_join_sql, "\nORDER BY gps.animal_id, gps.ts")
 )
 
 print(joined)
 
-# TODO: using SQL, how many rows are in the joined table?
+joined_row_count <- dbGetQuery(
+    con,
+    paste0(
+        "
+        SELECT COUNT(*) AS joined_row_count
+        FROM (",
+        complex_join_sql,
+        ") AS joined
+        "
+    )
+)
+
+print(joined_row_count)
 
 # Using SQL, How many rows are in each of the source tables?
 
+source_row_counts <- dbGetQuery(
+    con,
+    "
+    SELECT 'animals' AS table_name, COUNT(*) AS row_count FROM animals
+    UNION ALL
+    SELECT 'gps_fixes' AS table_name, COUNT(*) AS row_count FROM gps_fixes
+    UNION ALL
+    SELECT 'weights' AS table_name, COUNT(*) AS row_count FROM weights
+    ORDER BY table_name
+    "
+)
+
+print(source_row_counts)
+
 # How many rows are in the joined table that have no matching animal_id in the animals table?
 
+rows_missing_animals <- dbGetQuery(
+    con,
+    paste0(
+        "
+        SELECT COUNT(*) AS rows_missing_animals
+        FROM (",
+        complex_join_sql,
+        ") AS joined
+        WHERE treatment_group IS NULL
+        "
+    )
+)
+
+print(rows_missing_animals)
+
 # How many rows are in the joined table that have no matching animal_id in the weights table?
+
+rows_missing_weights <- dbGetQuery(
+    con,
+    paste0(
+        "
+        SELECT COUNT(*) AS rows_missing_weights
+        FROM (",
+        complex_join_sql,
+        ") AS joined
+        WHERE weight_kg IS NULL
+        "
+    )
+)
+
+print(rows_missing_weights)
 
 
 
